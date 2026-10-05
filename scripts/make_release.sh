@@ -16,4 +16,4 @@ sed "s/@VERSION@/$VERSION/g" scripts/INSTALL.txt > "dist/release/$NAME/INSTALL.t
 uv run python scripts/third_party_licenses.py > "dist/release/$NAME/THIRD_PARTY_LICENSES.txt"
 
 # ditto (not zip) keeps the symlinks and executable bits that the PyInstaller bundle relies on
-(cd dist/release && ditto -c -k --keepParent "$NAME" "$NAME.zip" && shasum -a 256 "$NAME.zip" > SHA256SUMS.txt && cat SHA256SUMS.txt)
+(cd dist/release && ditto -c -k --norsrc --noextattr --noacl --keepParent "$NAME" "$NAME.zip" && shasum -a 256 "$NAME.zip" > SHA256SUMS.txt && cat SHA256SUMS.txt)
