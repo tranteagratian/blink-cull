@@ -1,4 +1,4 @@
-# Lightroom Classic plugin (experimental)
+# Lightroom Classic plugin (early)
 
 Runs Blink Cull on the photos you select and writes **colour labels, keywords and collections straight into the Lightroom catalog**.
 It never deletes or rejects photos and never touches your RAW files.
@@ -27,6 +27,7 @@ the sidecar holds. Writing through the Lightroom SDK avoids that.
 ## Known limits
 
 - ARW only; other files in the selection are counted and skipped.
+- Confirmed working on the author's Lightroom Classic setup (labels, keywords and collections); other versions and platforms are untested.
 - The colour label uses `photo:setRawMetadata("label", "Red"/"Yellow")`. If your label set uses other names the call may not apply; the plugin counts
   failures and tells you, and still adds keywords and collections.
 - Lightroom Classic only (the cloud-based Lightroom has no plug-in SDK). Scores are not cached: changing a threshold means analysing again.

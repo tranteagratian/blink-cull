@@ -6,8 +6,9 @@ Versiunea în engleză, cu toate detaliile: [README.md](README.md).
 Selectezi pozele în Lightroom, rulezi o comandă din meniu, iar pozele suspecte primesc **etichetă roșie sau galbenă, un cuvânt cheie și o colecție**
 pe care le parcurgi direct în grilă. Este un **ajutor la sortare**, nu un înlocuitor al verificării tale.
 
-> Stare: timpurie / experimentală. Detecția a fost construită și măsurată pe o singură nuntă (1363 de poze Sony a7 IV), etichetată de o singură persoană.
-> Partea din Lightroom (etichete, cuvinte cheie, colecții) a fost puțin testată în practică, așa că spune-mi ce vezi.
+> Stare: timpurie. Detecția a fost construită și măsurată pe o singură nuntă (1363 de poze Sony a7 IV), etichetată de o singură persoană.
+> Plugin-ul a fost folosit de autor în Lightroom Classic, unde etichetele, cuvintele cheie și colecțiile s-au aplicat corect. Alte versiuni de Lightroom,
+> alte seturi de etichete și alte platforme nu au fost testate, așa că spune-mi ce vezi.
 
 - **Privat:** nimic nu iese din calculatorul tău. Fără cloud, fără cont, fără acces la rețea.
 - **Doar citire:** fișierele RAW nu sunt modificate niciodată. Plugin-ul nu respinge și nu șterge poze: doar adaugă etichete, cuvinte cheie și colecții.

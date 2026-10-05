@@ -6,8 +6,9 @@ Select photos in Lightroom, run one menu command, and the suspicious ones come b
 collection** you can review right in the grid. It is a **sorting aid for culling**, not a replacement for looking:
 see [how good it is](#how-good-is-it) before you rely on it.
 
-> Status: early / experimental. The detection was built and measured on one wedding gallery (1363 Sony a7 IV photos) labelled by one person.
-> The Lightroom-side code (labels, keywords, collections) has had little real-world testing, so please report what you see.
+> Status: early. The detection was built and measured on one wedding gallery (1363 Sony a7 IV photos) labelled by one person.
+> The plugin has been used by its author in Lightroom Classic, where labels, keywords and collections were applied correctly. Other Lightroom
+> versions, label sets and platforms are untested, so please report what you see.
 
 - **Private**: nothing leaves your computer. No cloud, no account, no network access.
 - **Read-only**: your RAW files are never modified or deleted. The plugin never rejects or deletes photos either; it only adds labels, keywords and collections.
@@ -58,8 +59,8 @@ Only ARW files are analysed; anything else in the selection is counted and skipp
 - **Weak spots**: profile faces, couples hugging, people looking down; blurry or very dark faces are skipped, not judged.
 - **One gallery, one labeller.** The thresholds (0.45 / 0.25) were chosen on it and may need adjusting for other events, cameras and light.
 - **Sony ARW only**; **Lightroom Classic only** (the cloud-based Lightroom has no plug-in SDK); engine built for **macOS Apple silicon** only so far.
-- The colour label is set through `photo:setRawMetadata("label", "Red"/"Yellow")`. If your colour-label set uses other names it may not apply;
-  the plugin counts failures and tells you, and still adds keywords and collections.
+- The colour label is set through `photo:setRawMetadata("label", "Red"/"Yellow")`. It worked on the author's setup; if your colour-label set uses
+  other names it may not apply. The plugin counts failures and tells you, and still adds keywords and collections.
 
 ## Privacy and safety
 

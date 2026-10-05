@@ -94,8 +94,8 @@ Lightroom already has a good review interface, and reading sidecars back into a 
 already have ratings or keywords can overwrite them, whereas writing through the SDK cannot. The desktop app also had to be opened separately,
 which is friction nobody wants in the middle of culling.
 
-The least certain part of the plugin is the label call (`photo:setRawMetadata("label", ...)`): the plugin counts failures and tells you,
-and still applies keywords and collections. Dialog texts live in one `STRINGS` table (English, Romanian); adding a language means adding one block.
+The least certain part of the plugin is the label call (`photo:setRawMetadata("label", ...)`). It worked on the author's setup, but label sets with other
+names are untested: the plugin counts failures and tells you, and still applies keywords and collections. Dialog texts live in one `STRINGS` table (English, Romanian); adding a language means adding one block.
 
 ## 5. Packaging
 
