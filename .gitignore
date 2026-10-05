@@ -26,3 +26,6 @@ xmp_test/
 labels*.json
 *-labels*.json
 *.tsv
+
+# the engine is built locally (scripts/build_engine.sh) and shipped in release zips, not in git
+lightroom/BlinkCull.lrdevplugin/bin/

@@ -1,6 +1,7 @@
--- Blink Cull pentru Lightroom Classic.
--- Ia pozele selectate, le da motorului Blink Cull (aplicatia, in modul fara interfata) si pune in catalog
--- eticheta de culoare (rosu / galben), cuvinte cheie si colectii. NU sterge, NU respinge si NU modifica fisierele RAW.
+-- Blink Cull for Lightroom Classic.
+-- Takes the selected photos, hands them to the Blink Cull engine (a bundled command-line program) and writes
+-- colour labels, keywords and collections straight into the catalog.
+-- It never deletes or rejects photos and never modifies the RAW files.
 
 local LrApplication = import "LrApplication"
 local LrBinding = import "LrBinding"
@@ -15,10 +16,77 @@ local LrView = import "LrView"
 
 local prefs = LrPrefs.prefsForPlugin()
 
+-- ---------------------------------------------------------------- texts (English / Romanian)
+local STRINGS = {
+  en = {
+    dialogTitle = "Blink Cull: closed eyes",
+    analyze = "Analyze",
+    selected = "%d selected photos will be analyzed (ARW files only).",
+    language = "Language:",
+    engine = "Engine:",
+    red = "Red (closed) at score >=",
+    yellow = "   Yellow (to check) at score >=",
+    skipLabeled = "Leave photos that already have a colour label alone",
+    addKeywords = "Add keywords (blinkcull-closed / blinkcull-check)",
+    makeCollections = "Create collections with the photos found (easy to review in the grid)",
+    noPhotos = "No photo is selected. Select photos (or a folder) and run again.",
+    noEngine = "The Blink Cull engine was not found at:\n%s\n\nReinstall the plugin (the engine lives in its bin folder) or enter the correct path in the dialog.",
+    noArw = "None of the selected photos is an ARW (Sony RAW) file. Only ARW is supported for now.",
+    cannotWrite = "Cannot write the temporary file:\n%s",
+    progress = "Blink Cull: analyzing photos",
+    canceled = "Analysis canceled. Nothing was changed in the catalog.",
+    engineFailed = "The engine did not finish (code %s).\nCheck the engine path and try again. Nothing was changed in the catalog.",
+    undoName = "Blink Cull: labels",
+    collRed = "Blink Cull %s - red (closed)",
+    collYellow = "Blink Cull %s - yellow (to check)",
+    doneTitle = "Blink Cull: done",
+    analyzed = "Analyzed: %d ARW photos.",
+    redLine = "Red (closed, score >= %.2f): %d",
+    yellowLine = "Yellow (to check, score >= %.2f): %d",
+    okLine = "No problem: %d  |  no judged face: %d",
+    keptLine = "Kept with their existing label: %d",
+    errLine = "Errors / missing files: %d",
+    skipLine = "Ignored (not ARW): %d",
+    labelFailed = "WARNING: could not set the colour label on %d photos (keywords and collections were applied).",
+  },
+  ro = {
+    dialogTitle = "Blink Cull: ochi închiși",
+    analyze = "Analizează",
+    selected = "Se analizează %d poze selectate (doar fișiere ARW).",
+    language = "Limba:",
+    engine = "Motor:",
+    red = "Roșu (închis) la scor >=",
+    yellow = "   Galben (de verificat) la scor >=",
+    skipLabeled = "Nu schimba pozele care au deja o etichetă de culoare",
+    addKeywords = "Adaugă cuvinte cheie (blinkcull-closed / blinkcull-check)",
+    makeCollections = "Creează colecții cu pozele găsite (ușor de parcurs în grilă)",
+    noPhotos = "Nu e nicio poză selectată. Selectează pozele (sau un folder) și rulează din nou.",
+    noEngine = "Nu găsesc motorul Blink Cull la:\n%s\n\nReinstalează plugin-ul (motorul e în folderul lui bin) sau completează calea corectă în dialog.",
+    noArw = "Nicio poză selectată nu e în format ARW (Sony RAW). Momentan doar ARW e acceptat.",
+    cannotWrite = "Nu pot scrie fișierul temporar:\n%s",
+    progress = "Blink Cull: analizez pozele",
+    canceled = "Analiza a fost anulată. Nu am modificat nimic în catalog.",
+    engineFailed = "Motorul nu a terminat analiza (cod %s).\nVerifică calea motorului și încearcă din nou. Nu am modificat nimic în catalog.",
+    undoName = "Blink Cull: etichete",
+    collRed = "Blink Cull %s - roșii (închise)",
+    collYellow = "Blink Cull %s - galbene (de verificat)",
+    doneTitle = "Blink Cull: gata",
+    analyzed = "Analizate: %d poze ARW.",
+    redLine = "Roșii (închise, scor >= %.2f): %d",
+    yellowLine = "Galbene (de verificat, scor >= %.2f): %d",
+    okLine = "Fără probleme: %d  |  fără față judecată: %d",
+    keptLine = "Păstrate cu eticheta lor existentă: %d",
+    errLine = "Erori / fișiere lipsă: %d",
+    skipLine = "Ignorate (nu sunt ARW): %d",
+    labelFailed = "ATENȚIE: nu am putut seta eticheta de culoare la %d poze (cuvintele cheie și colecțiile au fost aplicate).",
+  },
+}
+
+-- ---------------------------------------------------------------- helpers
 local function q(s) return '"' .. s .. '"' end
 
 local function run(cmd)
-  if WIN_ENV then cmd = '"' .. cmd .. '"' end  -- cmd.exe vrea o pereche de ghilimele in jurul intregii comenzi
+  if WIN_ENV then cmd = '"' .. cmd .. '"' end  -- cmd.exe wants one more pair of quotes around the whole command
   return LrTasks.execute(cmd)
 end
 
@@ -30,79 +98,91 @@ local function readAll(path)
   return s
 end
 
+local function exe(base) return WIN_ENV and (base .. ".exe") or base end
+
+-- The engine ships inside the plugin folder (bin/BlinkCullEngine/). A path saved in the preferences is only used
+-- when the bundled engine is missing (for example a developer build elsewhere).
 local function defaultEngine()
+  local bundled = LrPathUtils.child(LrPathUtils.child(LrPathUtils.child(_PLUGIN.path, "bin"), "BlinkCullEngine"), exe("BlinkCullEngine"))
+  if LrFileUtils.exists(bundled) == "file" then return bundled end
+  if prefs.engine and LrFileUtils.exists(prefs.engine) == "file" then return prefs.engine end
   local home = LrPathUtils.getStandardFilePath("home")
-  local candidates = {
-    "/Applications/Blink Cull.app/Contents/MacOS/Blink Cull",
-    home .. "/Applications/Blink Cull.app/Contents/MacOS/Blink Cull",
-    home .. "/blink-cull/dist/Blink Cull.app/Contents/MacOS/Blink Cull",
-    "C:\\Program Files\\Blink Cull\\Blink Cull.exe",
-  }
-  for _, c in ipairs(candidates) do
-    if LrFileUtils.exists(c) == "file" then return c end
-  end
-  return candidates[1]
+  local dev = home .. "/blink-cull/dist/BlinkCullEngine/BlinkCullEngine"
+  if LrFileUtils.exists(dev) == "file" then return dev end
+  return bundled
 end
 
 local function showDialog(context, count)
   local f = LrView.osFactory()
   local props = LrBinding.makePropertyTable(context)
-  props.engine = prefs.engine or defaultEngine()
+  props.language = prefs.language or "en"
+  props.engine = defaultEngine()
   props.closedMin = prefs.closedMin or 0.45
   props.checkMin = prefs.checkMin or 0.25
   props.skipLabeled = (prefs.skipLabeled ~= false)
   props.addKeywords = (prefs.addKeywords ~= false)
   props.makeCollections = (prefs.makeCollections ~= false)
+  local S = STRINGS[props.language] or STRINGS.en
 
   local contents = f:column {
     bind_to_object = props,
     spacing = f:control_spacing(),
-    f:static_text { title = string.format("Se analizează %d poze selectate (doar fișiere ARW).", count) },
+    f:static_text { title = string.format(S.selected, count) },
     f:row {
-      f:static_text { title = "Motorul Blink Cull:", width = 130 },
+      f:static_text { title = S.language, width = 90 },
+      f:popup_menu {
+        value = LrView.bind("language"),
+        items = { { title = "English", value = "en" }, { title = "Română", value = "ro" } },
+      },
+      f:static_text { title = "  (applies from the next run)" },
+    },
+    f:row {
+      f:static_text { title = S.engine, width = 90 },
       f:edit_field { value = LrView.bind("engine"), width_in_chars = 55 },
     },
     f:row {
-      f:static_text { title = "Roșu (sigur) la scor ≥", width = 130 },
+      f:static_text { title = S.red, width = 160 },
       f:edit_field { value = LrView.bind("closedMin"), width_in_chars = 5, precision = 2, min = 0, max = 1 },
-      f:static_text { title = "   Galben (de verificat) la scor ≥" },
+      f:static_text { title = S.yellow },
       f:edit_field { value = LrView.bind("checkMin"), width_in_chars = 5, precision = 2, min = 0, max = 1 },
     },
-    f:checkbox { title = "Nu schimba pozele care au deja o etichetă de culoare", value = LrView.bind("skipLabeled") },
-    f:checkbox { title = "Adaugă cuvinte cheie (blinkcull-inchis / blinkcull-verifica)", value = LrView.bind("addKeywords") },
-    f:checkbox { title = "Creează colecții cu pozele găsite (ușor de parcurs în grilă)", value = LrView.bind("makeCollections") },
+    f:checkbox { title = S.skipLabeled, value = LrView.bind("skipLabeled") },
+    f:checkbox { title = S.addKeywords, value = LrView.bind("addKeywords") },
+    f:checkbox { title = S.makeCollections, value = LrView.bind("makeCollections") },
   }
 
   local result = LrDialogs.presentModalDialog {
-    title = "Blink Cull: ochi închiși",
+    title = S.dialogTitle,
     contents = contents,
-    actionVerb = "Analizează",
+    actionVerb = S.analyze,
   }
   if result ~= "ok" then return nil end
-  for _, k in ipairs { "engine", "closedMin", "checkMin", "skipLabeled", "addKeywords", "makeCollections" } do
+  for _, k in ipairs { "language", "engine", "closedMin", "checkMin", "skipLabeled", "addKeywords", "makeCollections" } do
     prefs[k] = props[k]
   end
   return props
 end
 
+-- ---------------------------------------------------------------- main
 LrFunctionContext.postAsyncTaskWithContext("BlinkCull", function(context)
   local catalog = LrApplication.activeCatalog()
   local photos = catalog:getTargetPhotos()
+  local S0 = STRINGS[prefs.language or "en"] or STRINGS.en
   if #photos == 0 then
-    LrDialogs.message("Blink Cull", "Nu e nicio poză selectată. Selectează pozele (sau un folder) și rulează din nou.", "info")
+    LrDialogs.message("Blink Cull", S0.noPhotos, "info")
     return
   end
 
   local opt = showDialog(context, #photos)
   if not opt then return end
+  local S = STRINGS[opt.language] or STRINGS.en
   local closedMin, checkMin = tonumber(opt.closedMin) or 0.45, tonumber(opt.checkMin) or 0.25
   if LrFileUtils.exists(opt.engine) ~= "file" then
-    LrDialogs.message("Blink Cull", "Nu găsesc motorul Blink Cull la:\n" .. tostring(opt.engine) ..
-      "\n\nInstalează aplicația Blink Cull și completează calea corectă în fereastra de dialog.", "critical")
+    LrDialogs.message("Blink Cull", string.format(S.noEngine, tostring(opt.engine)), "critical")
     return
   end
 
-  -- 1) lista de poze: cale -> pozele din catalog care o folosesc (copiile virtuale impart aceeasi cale)
+  -- 1) the list of photos: path -> catalog photos using it (virtual copies share a path)
   local byPath, order, skippedFormat = {}, {}, 0
   for _, photo in ipairs(photos) do
     local path = photo:getRawMetadata("path")
@@ -114,7 +194,7 @@ LrFunctionContext.postAsyncTaskWithContext("BlinkCull", function(context)
     end
   end
   if #order == 0 then
-    LrDialogs.message("Blink Cull", "Nicio poză selectată nu e în format ARW (Sony RAW). Momentan doar ARW e acceptat.", "info")
+    LrDialogs.message("Blink Cull", S.noArw, "info")
     return
   end
 
@@ -127,14 +207,14 @@ LrFunctionContext.postAsyncTaskWithContext("BlinkCull", function(context)
 
   local fh = io.open(listFile, "wb")
   if not fh then
-    LrDialogs.message("Blink Cull", "Nu pot scrie fișierul temporar:\n" .. listFile, "critical")
+    LrDialogs.message("Blink Cull", string.format(S.cannotWrite, listFile), "critical")
     return
   end
   fh:write(table.concat(order, "\n"), "\n")
   fh:close()
 
-  -- 2) rulam motorul, iar intr-un alt task urmarim progresul si anularea
-  local scope = LrProgressScope { title = "Blink Cull: analizez pozele", functionContext = context }
+  -- 2) run the engine; a second task follows its progress and watches for cancel
+  local scope = LrProgressScope { title = S.progress, functionContext = context }
   scope:setCancelable(true)
   local finished = false
   LrTasks.startAsyncTask(function()
@@ -157,17 +237,16 @@ LrFunctionContext.postAsyncTaskWithContext("BlinkCull", function(context)
   scope:done()
 
   if canceled then
-    LrDialogs.message("Blink Cull", "Analiza a fost anulată. Nu am modificat nimic în catalog.", "info")
+    LrDialogs.message("Blink Cull", S.canceled, "info")
     return
   end
   local raw = readAll(outFile)
   if exitCode ~= 0 or not raw then
-    LrDialogs.message("Blink Cull", "Motorul nu a terminat analiza (cod " .. tostring(exitCode) ..
-      ").\nVerifică calea motorului și încearcă din nou. Nu am modificat nimic în catalog.", "critical")
+    LrDialogs.message("Blink Cull", string.format(S.engineFailed, tostring(exitCode)), "critical")
     return
   end
 
-  -- 3) rezultatele: cale <TAB> scor <TAB> fete_judecate <TAB> stare
+  -- 3) results: path <TAB> score <TAB> faces_judged <TAB> status
   local results = {}
   for line in raw:gmatch("[^\r\n]+") do
     local path, score, judged, status = line:match("^(.-)\t(.-)\t(.-)\t(.*)$")
@@ -190,13 +269,13 @@ LrFunctionContext.postAsyncTaskWithContext("BlinkCull", function(context)
     end
   end
 
-  -- 4) scriem in catalog (etichete, cuvinte cheie, colectii)
+  -- 4) write into the catalog (labels, keywords, collections)
   local stamp = os.date("%Y-%m-%d %H:%M")
-  catalog:withWriteAccessDo("Blink Cull: etichete", function()
+  catalog:withWriteAccessDo(S.undoName, function()
     local kwRed, kwYellow
     if opt.addKeywords then
-      kwRed = catalog:createKeyword("blinkcull-inchis", {}, false, nil, true)
-      kwYellow = catalog:createKeyword("blinkcull-verifica", {}, false, nil, true)
+      kwRed = catalog:createKeyword("blinkcull-closed", {}, false, nil, true)
+      kwYellow = catalog:createKeyword("blinkcull-check", {}, false, nil, true)
     end
     local function apply(list, label, kw)
       for _, photo in ipairs(list) do
@@ -213,23 +292,21 @@ LrFunctionContext.postAsyncTaskWithContext("BlinkCull", function(context)
     apply(red, "Red", kwRed)
     apply(yellow, "Yellow", kwYellow)
     if opt.makeCollections then
-      if #red > 0 then catalog:createCollection("Blink Cull " .. stamp .. " – roșii (sigur)", nil, true):addPhotos(red) end
-      if #yellow > 0 then catalog:createCollection("Blink Cull " .. stamp .. " – galbene (de verificat)", nil, true):addPhotos(yellow) end
+      if #red > 0 then catalog:createCollection(string.format(S.collRed, stamp), nil, true):addPhotos(red) end
+      if #yellow > 0 then catalog:createCollection(string.format(S.collYellow, stamp), nil, true):addPhotos(yellow) end
     end
   end)
 
-  -- 5) rezumat
+  -- 5) summary
   local lines = {
-    string.format("Analizate: %d poze ARW.", #order),
-    string.format("Roșii (ochi închiși, scor ≥ %.2f): %d", closedMin, #red),
-    string.format("Galbene (de verificat, scor ≥ %.2f): %d", checkMin, #yellow),
-    string.format("Fără probleme: %d | fără fețe judecate: %d", counts.ok, counts.nojudged),
+    string.format(S.analyzed, #order),
+    string.format(S.redLine, closedMin, #red),
+    string.format(S.yellowLine, checkMin, #yellow),
+    string.format(S.okLine, counts.ok, counts.nojudged),
   }
-  if counts.kept > 0 then lines[#lines + 1] = string.format("Păstrate cu eticheta lor deja existentă: %d", counts.kept) end
-  if counts.error + counts.missing > 0 then lines[#lines + 1] = string.format("Erori / fișiere lipsă: %d", counts.error + counts.missing) end
-  if skippedFormat > 0 then lines[#lines + 1] = string.format("Ignorate (nu sunt ARW): %d", skippedFormat) end
-  if counts.labelFailed > 0 then
-    lines[#lines + 1] = string.format("ATENȚIE: nu am putut seta eticheta de culoare la %d poze (cuvintele cheie și colecțiile au fost aplicate).", counts.labelFailed)
-  end
-  LrDialogs.message("Blink Cull: gata", table.concat(lines, "\n"), "info")
+  if counts.kept > 0 then lines[#lines + 1] = string.format(S.keptLine, counts.kept) end
+  if counts.error + counts.missing > 0 then lines[#lines + 1] = string.format(S.errLine, counts.error + counts.missing) end
+  if skippedFormat > 0 then lines[#lines + 1] = string.format(S.skipLine, skippedFormat) end
+  if counts.labelFailed > 0 then lines[#lines + 1] = string.format(S.labelFailed, counts.labelFailed) end
+  LrDialogs.message(S.doneTitle, table.concat(lines, "\n"), "info")
 end)

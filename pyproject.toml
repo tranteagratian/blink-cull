@@ -1,7 +1,7 @@
 [project]
 name = "blink-cull"
 version = "0.1.0"
-description = "Find photos with closed eyes in a folder of Sony ARW files. Local, read-only, with a desktop app and a Lightroom Classic plugin."
+description = "Lightroom Classic plugin that finds photos with closed eyes in Sony ARW files. Local and read-only."
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
@@ -14,7 +14,6 @@ dependencies = [
     "numpy<2",
     "opencv-python==4.10.0.84",
     "pillow>=12.3.0",
-    "pywebview>=6.2.1",
     "rawpy>=0.27.1",
 ]
 

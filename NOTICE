@@ -9,7 +9,6 @@ This project builds on the following third-party software and models. Their lice
                                              separately from Google's MediaPipe model storage (see its model card)
   OpenCV                        Apache-2.0   image handling; the YuNet face detector (OpenCV Zoo) is MIT-licensed
   rawpy                         MIT          wrapper around LibRaw (LGPL-2.1 / CDDL-1.0), used to read the embedded preview of RAW files
-  pywebview                     BSD-3-Clause native window of the desktop app
   NumPy                         BSD-3-Clause
   Pillow                        HPND
 

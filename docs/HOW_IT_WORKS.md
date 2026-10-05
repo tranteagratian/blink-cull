@@ -43,7 +43,7 @@ The blendshapes degraded more gracefully on those views in our tests (we did not
 ## 2. How it was measured
 
 1. Run the tool; save every score.
-2. The photographer labelled **all 594 photos the tool flagged** as "closed" / "open" in the app (precision is therefore measured directly).
+2. The photographer labelled **all 594 photos the tool flagged** as "closed" / "open" in a review page (precision is therefore measured directly).
 3. To estimate recall, 80 photos the tool did **not** flag were drawn at random and labelled the same way (11 of 71 still-unflagged ones were closed → about 117 missed in ~758, 90% interval 74–180).
 4. Recall = found / (found + estimated missed), with the interval propagated from that sample.
 
@@ -78,39 +78,36 @@ scored low (2), a crowd of blurry guests (1), and one photo with no face at all 
 - **Ambiguity is in the data.** Smiling squints, downward gazes and profiles are neither clearly open nor clearly closed; a binary
   label cannot represent them. A three-state label (open / lowered or squinting / closed) would be the right next dataset.
 
-## 4. The pieces around the pipeline
+## 4. The engine and the plugin
 
-**Desktop app** (`app.py`, `ui/index.html`). A pywebview window shows a single-file UI served by a tiny HTTP server on
-`127.0.0.1`. Every request needs a random per-run token and a matching `Host` header (defence against other web pages
-reaching the server and against DNS rebinding). The folder dialog is opened by Python on the server side, not through
-a JavaScript bridge, which did not initialise in the packaged build. Results and thumbnails live in the app's data folder,
-so reopening a folder is instant and your "closed / fine" marks persist.
+**Engine** (`engine.py`). A small command-line program that scores a list of ARW files and writes one TSV line per photo
+(`path, score, faces judged, status`) as it goes, updating a progress file and stopping cleanly when a cancel file appears.
+The model is loaded only when a face actually needs it, so missing or corrupt files cost nothing. It only reads RAW files.
 
-**Lightroom Classic plugin** (`lightroom/`, Lua). It writes the selected photos' paths to a temp file, runs the app in
-headless mode (`--scan-list`), reads a small TSV of scores and then writes colour labels, keywords and collections *into
-the catalog*. This is deliberately not XMP: reading sidecar metadata back into a catalog for photos that already have ratings
-or keywords can overwrite them. The least certain part is the label call (`photo:setRawMetadata("label", ...)`); the plugin counts
-failures and tells you, and still applies keywords and collections.
+**Lightroom Classic plugin** (`lightroom/`, Lua). It writes the selected photos' paths to a temp file, runs the engine from the
+plugin's own `bin/` folder, follows the progress file for the progress bar (and writes the cancel file if you press Cancel), reads the TSV,
+and then writes colour labels, keywords and collections *into the catalog* through the Lightroom SDK, as one undoable step.
+The plugin applies the thresholds itself, but it does not cache scores, so changing a threshold means running the analysis again (a score cache is an obvious improvement).
 
-**Packaging.** `pyinstaller` builds the macOS app (about 255 MB). The first build was 1.2 GB because PyTorch, jaxlib, pandas and
-pyarrow were pulled in; excluding the modules the app does not use fixed that (see Packaging below).
+**Why a plugin, not an app.** Earlier versions of this project had a desktop app (a local web UI) and exported `.xmp` sidecars. Both were removed:
+Lightroom already has a good review interface, and reading sidecars back into a catalog (*Metadata ▸ Read Metadata from Files*) for photos that
+already have ratings or keywords can overwrite them, whereas writing through the SDK cannot. The desktop app also had to be opened separately,
+which is friction nobody wants in the middle of culling.
+
+The least certain part of the plugin is the label call (`photo:setRawMetadata("label", ...)`): the plugin counts failures and tells you,
+and still applies keywords and collections. Dialog texts live in one `STRINGS` table (English, Romanian); adding a language means adding one block.
 
 ## 5. Packaging
 
-```bash
-uv sync --group build
-uv run python fetch_models.py
-uv run --group build pyinstaller --noconfirm --windowed --name "Blink Cull" \
-  --add-data "models/yunet.onnx:models" --add-data "models/face_landmarker.task:models" --add-data "ui:ui" \
-  --collect-all mediapipe --collect-all rawpy --collect-submodules webview \
-  --exclude-module torch --exclude-module torchvision --exclude-module jax --exclude-module jaxlib \
-  --exclude-module pandas --exclude-module pyarrow --exclude-module scipy --exclude-module sklearn \
-  app.py
-"dist/Blink Cull.app/Contents/MacOS/Blink Cull" --selftest /path/to/arw/folder   # headless check of the packaged build
-```
-Pins in `pyproject.toml` (`mediapipe==0.10.21`, `numpy<2`, `opencv-python==4.10`) are deliberate: MediaPipe 1.0.x crashes on
-start-up on macOS 26 while initialising its Metal GPU helper, and 0.10.21 requires NumPy 1.x.
-PyTorch is only needed for the failed experiment: `uv sync --group experiments`.
+`scripts/build_engine.sh` runs PyInstaller (one-folder, console) and installs the result in `lightroom/BlinkCull.lrdevplugin/bin/BlinkCullEngine`
+(about 250 MB: OpenCV, MediaPipe, NumPy and Matplotlib, which MediaPipe imports). The plugin looks for it there first.
+The first build of an earlier version was 1.2 GB because PyTorch, jaxlib, pandas and pyarrow were pulled in; excluding the modules the engine does
+not use fixed that. Check a build with `BlinkCullEngine --selftest /folder/with/arw`.
+
+Pins in `pyproject.toml` (`mediapipe==0.10.21`, `numpy<2`, `opencv-python==4.10`) are deliberate: MediaPipe 1.0.x crashes on start-up on macOS 26
+while initialising its Metal GPU helper, and 0.10.21 requires NumPy 1.x. PyTorch is only needed for the failed experiment: `uv sync --group experiments`.
+The unsigned engine may be blocked by Gatekeeper on other Macs (`xattr -dr com.apple.quarantine <plugin folder>`); a signed, notarized build would
+need an Apple Developer account. Windows needs the same PyInstaller command run on Windows (`;` instead of `:` in `--add-data`) and is untested.
 
 ## 6. Reproducing the experiments
 

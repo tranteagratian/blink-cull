@@ -3,8 +3,9 @@ return {
   LrSdkMinimumVersion = 6.0,
   LrToolkitIdentifier = "ro.blinkcull.lightroom",
   LrPluginName = "Blink Cull",
+  LrPluginInfoUrl = "https://github.com/tranteagratian/blink-cull",
   LrLibraryMenuItems = {
-    { title = "Găsește pozele cu ochi închiși (selecția curentă)", file = "FindBlinks.lua" },
+    { title = "Find photos with closed eyes (selected photos)", file = "FindBlinks.lua" },
   },
-  VERSION = { major = 0, minor = 1, revision = 0 },
+  VERSION = { major = 0, minor = 2, revision = 0 },
 }
