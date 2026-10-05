@@ -1,0 +1,16 @@
+Blink Cull
+Copyright 2026 Trantea Robert Gratian
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This project builds on the following third-party software and models. Their licences apply to them:
+
+  MediaPipe (Google)            Apache-2.0   face landmarks and blink blendshapes; the Face Landmarker model is downloaded
+                                             separately from Google's MediaPipe model storage (see its model card)
+  OpenCV                        Apache-2.0   image handling; the YuNet face detector (OpenCV Zoo) is MIT-licensed
+  rawpy                         MIT          wrapper around LibRaw (LGPL-2.1 / CDDL-1.0), used to read the embedded preview of RAW files
+  pywebview                     BSD-3-Clause native window of the desktop app
+  NumPy                         BSD-3-Clause
+  Pillow                        HPND
+
+The model files are NOT included in this repository; `python fetch_models.py` downloads them.

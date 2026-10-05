@@ -1,0 +1,28 @@
+# environment / build
+.venv/
+__pycache__/
+*.pyc
+build/
+dist/
+*.spec
+.DS_Store
+
+# local data: models are downloaded (python fetch_models.py), everything else is private or generated
+models/
+data/
+out/
+xmp_test/
+
+# never commit photos, sidecars or labels (they contain real people's faces / file names)
+*.ARW
+*.arw
+*.CR2
+*.CR3
+*.NEF
+*.RAF
+*.DNG
+*.xmp
+*.XMP
+labels*.json
+*-labels*.json
+*.tsv
