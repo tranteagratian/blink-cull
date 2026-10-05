@@ -1,6 +1,6 @@
 [project]
 name = "blink-cull"
-version = "0.1.0"
+version = "0.2.0"
 description = "Lightroom Classic plugin that finds photos with closed eyes in Sony ARW files. Local and read-only."
 readme = "README.md"
 license = "Apache-2.0"

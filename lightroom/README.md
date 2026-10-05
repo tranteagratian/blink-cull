@@ -5,7 +5,7 @@ It never deletes or rejects photos and never touches your RAW files.
 
 ## Install
 
-1. The plugin folder `BlinkCull.lrdevplugin` must contain the engine in `bin/BlinkCullEngine/` (build it with `./scripts/build_engine.sh`, or use a release zip).
+1. Download the release zip (it follows `INSTALL.txt`), or build the engine yourself with `./scripts/build_engine.sh`: the plugin folder `BlinkCull.lrdevplugin` must contain it in `bin/BlinkCullEngine/`.
 2. Lightroom Classic ▸ *File ▸ Plug-in Manager… ▸ Add* ▸ choose the folder `BlinkCull.lrdevplugin`.
 3. If macOS blocks the unsigned engine: `xattr -dr com.apple.quarantine BlinkCull.lrdevplugin` once.
 

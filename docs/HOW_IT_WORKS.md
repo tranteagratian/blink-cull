@@ -104,6 +104,14 @@ names are untested: the plugin counts failures and tells you, and still applies 
 The first build of an earlier version was 1.2 GB because PyTorch, jaxlib, pandas and pyarrow were pulled in; excluding the modules the engine does
 not use fixed that. Check a build with `BlinkCullEngine --selftest /folder/with/arw`.
 
+**Which Python, and why it matters.** `build_engine.sh` builds with uv's standalone Python, not Homebrew's. A Homebrew Python compiled on macOS 26 makes every extension
+module in the bundle require macOS 26, so the first build would have refused to start on anything older. With the standalone Python the strictest remaining
+requirement is **macOS 14.5**, set by MediaPipe's own wheels. Check any build with `vtool -show-build` on its binaries.
+
+**Release.** `scripts/make_release.sh` assembles `BlinkCull-<version>-macos-arm64.zip`: the plugin folder with the engine inside, `INSTALL.txt` (English and Romanian), `LICENSE`, `NOTICE`
+and `THIRD_PARTY_LICENSES.txt` (generated from the dependency tree; jax and its friends are excluded because the build excludes them, which was verified against the executable's
+archive listing). It uses `ditto`, not `zip`, because the bundle relies on symlinks and executable bits. The zip is not signed or notarized.
+
 Pins in `pyproject.toml` (`mediapipe==0.10.21`, `numpy<2`, `opencv-python==4.10`) are deliberate: MediaPipe 1.0.x crashes on start-up on macOS 26
 while initialising its Metal GPU helper, and 0.10.21 requires NumPy 1.x. PyTorch is only needed for the failed experiment: `uv sync --group experiments`.
 The unsigned engine may be blocked by Gatekeeper on other Macs (`xattr -dr com.apple.quarantine <plugin folder>`); a signed, notarized build would

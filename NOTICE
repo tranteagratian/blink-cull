@@ -13,3 +13,5 @@ This project builds on the following third-party software and models. Their lice
   Pillow                        HPND
 
 The model files are NOT included in this repository; `python fetch_models.py` downloads them.
+
+The release zip also bundles these components as a built program; their licences are reproduced in THIRD_PARTY_LICENSES.txt inside the zip.

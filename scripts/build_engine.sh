@@ -5,6 +5,11 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# Build with uv's standalone Python, NOT a Homebrew/system one: a Python compiled on macOS 26 makes every extension module
+# in the bundle require macOS 26, so the engine would refuse to start on older systems.
+export UV_PYTHON_PREFERENCE=only-managed
+uv python install 3.12
+rm -rf .venv
 uv sync --group build
 uv run python fetch_models.py
 

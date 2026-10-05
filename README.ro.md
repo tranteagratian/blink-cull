@@ -29,12 +29,16 @@ dar chiar dacă revezi toate pozele marcate, găsești aproximativ trei sferturi
 
 ## Instalare
 
-Ai nevoie de Lightroom Classic și, deocamdată, de un Mac cu procesor Apple (acolo a fost construit motorul).
+Ai nevoie de Lightroom Classic, un Mac cu **procesor Apple (M1 sau mai nou)** și **macOS 14.5 sau mai nou**.
 
-1. Obține folderul `BlinkCull.lrdevplugin` **cu motorul în el** (`bin/BlinkCullEngine/`): fie descarci un release (când va exista), fie îl construiești:
-   `git clone https://github.com/tranteagratian/blink-cull && cd blink-cull && ./scripts/build_engine.sh` (Python 3.12 și [uv](https://docs.astral.sh/uv/)).
-2. Lightroom Classic ▸ *File ▸ Plug-in Manager… ▸ Add* ▸ alegi `lightroom/BlinkCull.lrdevplugin`.
-3. Dacă macOS blochează motorul (nu e semnat), rulezi o dată `xattr -dr com.apple.quarantine lightroom/BlinkCull.lrdevplugin`.
+1. Descarci `BlinkCull-0.2.0-macos-arm64.zip` din [ultimul release](https://github.com/tranteagratian/blink-cull/releases/latest) și îl dezarhivezi.
+2. Urmezi `INSTALL.txt` din arhivă (trei pași scurți: pui folderul `BlinkCull.lrdevplugin` într-un loc permanent, rulezi o comandă `xattr`, apoi
+   *Lightroom ▸ File ▸ Plug-in Manager… ▸ Add*). Motorul e deja în folderul plugin-ului; nu instalezi nicio aplicație separată.
+
+Programul **nu e semnat și nici notarizat** (ar cere un cont Apple Developer plătit), deci macOS îl poate bloca; pasul `xattr` din `INSTALL.txt` rezolvă asta.
+
+**Sau îl construiești singur:** `git clone https://github.com/tranteagratian/blink-cull && cd blink-cull && ./scripts/build_engine.sh`
+(Python 3.12 și [uv](https://docs.astral.sh/uv/)), apoi adaugi `lightroom/BlinkCull.lrdevplugin` în Plug-in Manager.
 
 ## Folosire
 
@@ -46,7 +50,7 @@ Alegi pragurile (implicit 0.45 roșu, 0.25 galben) și opțiunile, apoi *Analize
 
 - Puncte slabe: fețe de profil, îmbrățișări, privit în jos; fețele neclare sau foarte întunecate sunt sărite.
 - **O singură galerie, un singur etichetator:** pragurile pot trebui ajustate la alte evenimente, aparate sau lumină.
-- Doar **Sony ARW**, doar **Lightroom Classic**, motor construit doar pentru **macOS Apple silicon**.
+- Doar **Sony ARW**, doar **Lightroom Classic**, motorul e construit doar pentru **Mac-uri cu procesor Apple și macOS 14.5+**; Windows și Mac-urile Intel nu sunt suportate încă.
 - **Nu pune niciodată poze cu oameni reali, RAW-uri sau fișiere cu etichete în repo sau în issue-uri.**
 
 ## Licență

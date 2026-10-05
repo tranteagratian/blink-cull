@@ -1,0 +1,47 @@
+BLINK CULL @VERSION@: Lightroom Classic plugin that finds photos with closed eyes
+Requires: Lightroom Classic, a Mac with Apple silicon (M1 or newer), macOS 14.5 or newer.
+
+1. Move the folder "BlinkCull.lrdevplugin" somewhere permanent (for example Documents/Lightroom Plugins).
+   Lightroom uses it in place, so do not delete or move it afterwards.
+
+2. Open Terminal, type this (with a space at the end), then DRAG the BlinkCull.lrdevplugin folder into the
+   Terminal window and press Enter:
+
+       xattr -dr com.apple.quarantine
+
+   Why: macOS can block programs downloaded from the internet that are not notarized, and this program is not.
+   The command tells macOS you trust it. If the plugin later says that the engine did not finish, this is the first thing to check.
+
+3. In Lightroom Classic: File > Plug-in Manager > Add > choose BlinkCull.lrdevplugin.
+
+4. Use it: Library module > select photos (a folder, then Cmd+A) > Library > Plug-in Extras >
+   "Find photos with closed eyes (selected photos)". Only Sony ARW files are analysed.
+
+Nothing leaves your computer. Your RAW files are never modified. Photos are only given colour labels,
+keywords and collections inside the Lightroom catalog (one undoable step).
+Docs, source and issues: https://github.com/tranteagratian/blink-cull
+
+----------------------------------------------------------------------------------------------------------
+
+BLINK CULL @VERSION@: plugin Lightroom Classic care găsește pozele cu ochi închiși
+Cerințe: Lightroom Classic, Mac cu procesor Apple (M1 sau mai nou), macOS 14.5 sau mai nou.
+
+1. Mută folderul "BlinkCull.lrdevplugin" într-un loc permanent (de exemplu Documents/Lightroom Plugins).
+   Lightroom îl folosește de acolo, deci nu-l șterge și nu-l muta după aceea.
+
+2. Deschide Terminal, scrie asta (cu un spațiu la sfârșit), apoi TRAGE folderul BlinkCull.lrdevplugin în
+   fereastra Terminal și apasă Enter:
+
+       xattr -dr com.apple.quarantine
+
+   De ce: macOS poate bloca programele descărcate de pe internet care nu sunt notarizate, iar acesta nu este.
+   Comanda îi spune lui macOS că ai încredere în el. Dacă plugin-ul spune mai târziu că motorul nu a terminat, aceasta e prima verificare.
+
+3. În Lightroom Classic: File > Plug-in Manager > Add > alege BlinkCull.lrdevplugin.
+
+4. Folosire: modulul Library > selectezi pozele (un folder, apoi Cmd+A) > Library > Plug-in Extras >
+   "Find photos with closed eyes (selected photos)". Se analizează doar fișiere Sony ARW.
+
+Nimic nu iese din calculatorul tău. Fișierele RAW nu sunt modificate niciodată. Pozele primesc doar etichete de culoare,
+cuvinte cheie și colecții în catalogul Lightroom (un singur pas care se poate anula cu Undo).
+Documentație, cod sursă și probleme: https://github.com/tranteagratian/blink-cull

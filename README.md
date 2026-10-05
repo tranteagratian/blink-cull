@@ -13,7 +13,7 @@ see [how good it is](#how-good-is-it) before you rely on it.
 - **Private**: nothing leaves your computer. No cloud, no account, no network access.
 - **Read-only**: your RAW files are never modified or deleted. The plugin never rejects or deletes photos either; it only adds labels, keywords and collections.
 - **Fast**: about 0.3 s per photo on an Apple-silicon Mac (~6 minutes for 1,400 photos), with a progress bar and a Cancel button.
-- **No separate app to open**: the analysis engine ships inside the plugin folder.
+- **Nothing else to install**: the analysis engine ships inside the plugin folder.
 
 ## How good is it?
 
@@ -34,16 +34,21 @@ problems. Profile faces, hugging couples and people looking down are weak spots.
 
 ## Install
 
-Requires Lightroom Classic and, for now, an Apple-silicon Mac (the engine has only been built there).
+Requires Lightroom Classic, a Mac with **Apple silicon (M1 or newer)** and **macOS 14.5 or newer**.
 
-1. Get the plugin folder `BlinkCull.lrdevplugin` **with the engine inside it** (`bin/BlinkCullEngine/`). Either download a release zip
-   (when one is published) or build it yourself:
-   ```bash
-   git clone https://github.com/tranteagratian/blink-cull && cd blink-cull
-   ./scripts/build_engine.sh        # needs Python 3.12 and uv; takes a couple of minutes
-   ```
-2. Lightroom Classic ▸ *File ▸ Plug-in Manager… ▸ Add* ▸ choose `lightroom/BlinkCull.lrdevplugin`.
-3. If macOS blocks the engine (it is unsigned) run `xattr -dr com.apple.quarantine lightroom/BlinkCull.lrdevplugin` once.
+1. Download `BlinkCull-0.2.0-macos-arm64.zip` from the [latest release](https://github.com/tranteagratian/blink-cull/releases/latest) and unzip it.
+2. Follow `INSTALL.txt` inside (three short steps: put the `BlinkCull.lrdevplugin` folder somewhere permanent, run one `xattr` command, then
+   *Lightroom ▸ File ▸ Plug-in Manager… ▸ Add*). The engine is already inside the plugin folder; there is no separate app to install.
+
+The program is **not signed or notarized** (that needs a paid Apple Developer account), so macOS may block it; the `xattr` step in `INSTALL.txt` handles that.
+
+**Build it yourself instead:**
+```bash
+git clone https://github.com/tranteagratian/blink-cull && cd blink-cull
+./scripts/build_engine.sh        # needs uv; builds the engine into lightroom/BlinkCull.lrdevplugin/bin (a couple of minutes)
+./scripts/make_release.sh        # optional: assemble the same zip as the release
+```
+Then add `lightroom/BlinkCull.lrdevplugin` in Lightroom's Plug-in Manager.
 
 ## Use
 
@@ -58,7 +63,7 @@ Only ARW files are analysed; anything else in the selection is counted and skipp
 
 - **Weak spots**: profile faces, couples hugging, people looking down; blurry or very dark faces are skipped, not judged.
 - **One gallery, one labeller.** The thresholds (0.45 / 0.25) were chosen on it and may need adjusting for other events, cameras and light.
-- **Sony ARW only**; **Lightroom Classic only** (the cloud-based Lightroom has no plug-in SDK); engine built for **macOS Apple silicon** only so far.
+- **Sony ARW only**; **Lightroom Classic only** (the cloud-based Lightroom has no plug-in SDK); the engine is built for **Apple-silicon Macs on macOS 14.5+** only so far; Windows and Intel Macs are not supported yet.
 - The colour label is set through `photo:setRawMetadata("label", "Red"/"Yellow")`. It worked on the author's setup; if your colour-label set uses
   other names it may not apply. The plugin counts failures and tells you, and still adds keywords and collections.
 
